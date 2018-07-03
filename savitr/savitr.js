@@ -34,7 +34,7 @@ var Savitr = function(game_board, options) {
   function start() {
     selected = [];  // clear selected so the reset button can call this method
 
-    deal_cards(rows*columns);
+    deal_cards();
 
     // make cards clickable
     $('.card', game_board).click(card_click);
@@ -44,6 +44,7 @@ var Savitr = function(game_board, options) {
 
   function draw_board(rows,columns) {
     var board = $('<div/>').addClass('main');
+
 
     var table = $('<table/>').addClass('board');
 
@@ -57,15 +58,10 @@ var Savitr = function(game_board, options) {
     for (var r=0; r < rows; r++) {
       var row = $('<tr/>');
       for (var c=0; c < columns; c++) {
-        row.append($('<td/>')
-           .addClass('board-' + ((r*columns)+c+1)))
-           .css({'border-color': '#000000', 'border-width': '1px'});
+        row.append($('<td/>').addClass('board-' + ((r*columns)+c+1)));
       }
       table.append(row);
     }
-
-    table.css('table-layout','fixed');
-    $('td',table).css({ width: '100px', height:'100px', 'border-style': 'solid' });
 
     board.append(table);
 
@@ -113,8 +109,8 @@ var Savitr = function(game_board, options) {
     return cards_left;
   }
 
-  function deal_cards(num) {
-    for (var i=0; i < num ; i++) {
+  function deal_cards() {
+    for (var i=0; i < settings['rows']*settings['columns'] ; i++) {
       var card_index = i;  // deck is shuffled, assuming, so the i'th item in the deck is the i'th card placed
       var card = deck[card_index];
       // _Joy of Set_ file naming scheme (p. ???); Blake chopped these up, thanks Blake!
@@ -145,7 +141,7 @@ var Savitr = function(game_board, options) {
       // not already selected, add it if there's not already 3 selected
       if (selected.length < 3) {
         selected.push(card_number);
-        $(this).parent('td').addClass('selected').css({'border-color': 'blue', 'border-width': '5px'});
+        $(this).parent('td').toggleClass('selected');
       }
 
       if (selected.length == 3) {
@@ -159,9 +155,6 @@ var Savitr = function(game_board, options) {
           // remove the cards and unselect the board spots
           selected = [];
           $('.selected .card', game_board).remove();
-
-          $('.selected', game_board).css({'border-color': '#000000', 'border-width': '1px'});
-
           $('.selected', game_board).toggleClass('selected');
 
           if ($('.card', game_board).length == 0) {
@@ -187,8 +180,7 @@ var Savitr = function(game_board, options) {
       selected.splice(selected.indexOf(card_number), 1);
 
       // update UI
-      $('.selected', game_board).css({'border-color': '#000000', 'border-width': '1px'});
-      $('.selected', game_board).toggleClass('selected');
+      $(this).parent('td').toggleClass('selected');
     }
   }
 
