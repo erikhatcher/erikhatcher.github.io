@@ -69,6 +69,7 @@ var Savitr = function(game_board, options) {
   }
 
   function new_deck(shuffle) {
+    // shuffle can be true/false or a string to set the random seed; true for arbitrary seed
     var deck = [];
 
     numbers.forEach(function(number) {
@@ -82,7 +83,11 @@ var Savitr = function(game_board, options) {
       })
     });
 
-    if (shuffle) { shuffle_array(deck); }
+    if (shuffle) {
+      // checked the code and null seed is same as Math.seedrandom()
+      var rng = new Math.seedrandom(typeof shuffle === 'string' ? shuffle : null);
+      shuffle_array(deck, rng);
+    }
 
     return deck;
   }
@@ -258,12 +263,15 @@ var Savitr = function(game_board, options) {
     return sets;
   }
 
-  function shuffle_array(array) {
+  function shuffle_array(array, rng) {
+    if (rng == null) {
+      rng = Math.random;
+    }
     // Randomize array element order in-place.
     // Using Durstenfeld shuffle algorithm.
     //   * borrowed from https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
     for (var i = array.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
+      var j = Math.floor(rng() * (i + 1));
       var temp = array[i];
       array[i] = array[j];
       array[j] = temp;
@@ -357,3 +365,7 @@ var Savitr = function(game_board, options) {
 
   return {start: start};
 };
+
+
+// https://github.com/davidbau/seedrandom: seedrandom.min.js pasted here (MIT License)
+!function(a,b){function c(c,j,k){var n=[];j=1==j?{entropy:!0}:j||{};var s=g(f(j.entropy?[c,i(a)]:null==c?h():c,3),n),t=new d(n),u=function(){for(var a=t.g(m),b=p,c=0;a<q;)a=(a+c)*l,b*=l,c=t.g(1);for(;a>=r;)a/=2,b/=2,c>>>=1;return(a+c)/b};return u.int32=function(){return 0|t.g(4)},u.quick=function(){return t.g(4)/4294967296},u.double=u,g(i(t.S),a),(j.pass||k||function(a,c,d,f){return f&&(f.S&&e(f,t),a.state=function(){return e(t,{})}),d?(b[o]=a,c):a})(u,s,"global"in j?j.global:this==b,j.state)}function d(a){var b,c=a.length,d=this,e=0,f=d.i=d.j=0,g=d.S=[];for(c||(a=[c++]);e<l;)g[e]=e++;for(e=0;e<l;e++)g[e]=g[f=s&f+a[e%c]+(b=g[e])],g[f]=b;(d.g=function(a){for(var b,c=0,e=d.i,f=d.j,g=d.S;a--;)b=g[e=s&e+1],c=c*l+g[s&(g[e]=g[f=s&f+b])+(g[f]=b)];return d.i=e,d.j=f,c})(l)}function e(a,b){return b.i=a.i,b.j=a.j,b.S=a.S.slice(),b}function f(a,b){var c,d=[],e=typeof a;if(b&&"object"==e)for(c in a)try{d.push(f(a[c],b-1))}catch(a){}return d.length?d:"string"==e?a:a+"\0"}function g(a,b){for(var c,d=a+"",e=0;e<d.length;)b[s&e]=s&(c^=19*b[s&e])+d.charCodeAt(e++);return i(b)}function h(){try{var b;return j&&(b=j.randomBytes)?b=b(l):(b=new Uint8Array(l),(k.crypto||k.msCrypto).getRandomValues(b)),i(b)}catch(b){var c=k.navigator,d=c&&c.plugins;return[+new Date,k,d,k.screen,i(a)]}}function i(a){return String.fromCharCode.apply(0,a)}var j,k=this,l=256,m=6,n=52,o="random",p=b.pow(l,m),q=b.pow(2,n),r=2*q,s=l-1;if(b["seed"+o]=c,g(b.random(),a),"object"==typeof module&&module.exports){module.exports=c;try{j=require("crypto")}catch(a){}}else"function"==typeof define&&define.amd&&define(function(){return c})}([],Math);
