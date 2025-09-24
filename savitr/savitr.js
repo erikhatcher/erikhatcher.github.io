@@ -31,27 +31,44 @@ var Savitr = function(game_board, options) {
 
   game_board.addClass('savitr'); // tag the game board, for styling and identification purposes
 
+  var timer_display = document.getElementById("timer");
+  var timer_var;
+  var total_seconds = 0;
+  var initial_sets = [];
+
   function start() {
     selected = [];  // clear selected so the reset button can call this method
 
     deal_cards();
+    initial_sets = sets_in(cards_left())
 
     // make cards clickable
     $('.card', game_board).click(card_click);
 
-    update_status('Savitr');
+    update_status('Savitr' + (typeof settings['shuffle'] === 'string' ? ' ' + settings['shuffle'] : ''));
+
+    $('.controls .finish',game_board).click(finish_click);
+
+    total_seconds = 0;
+    timer_display.innerHTML = "00:00:00";
+    if (!timer_var) { // Prevent multiple intervals from starting
+      timer_var = setInterval(timer, 1000);
+    }
   }
 
   function draw_board(rows,columns) {
     var board = $('<div/>').addClass('main');
-
 
     var table = $('<table/>').addClass('board');
 
     table.append($('<tr class="header">'+
                       '<th class="sets_left" align="left"></th>' +
                       '<th class="message" align="center" colspan="'+(columns-2)+'"></th>' +
-                      '<th class="controls" align="right"><button class="control reset">reset</button></th>' +
+                      '<th class="controls" align="right">'+
+                          '<span id="timer">00:00:00</span>'+
+                          '<button class="control finish">FINISH</button>'+
+                         // '<button class="control reset">reset</button>'+
+                      '</th>' +
                     '</tr>'));
     $('.controls .reset',table).click(start);
 
@@ -99,8 +116,8 @@ var Savitr = function(game_board, options) {
     // How many sets are there laid out?
     var sets_left = sets_in(cards_left());
 
-    $('.sets_left',game_board).html(
-      (sets_left == 0 ? 'No sets' : sets_left.length + ' set' + (sets_left.length>1 ? 's' : '')) + ' left');
+    // $('.sets_left',game_board).html(
+    //   (sets_left == 0 ? 'No sets' : sets_left.length + ' set' + (sets_left.length>1 ? 's' : '')) + ' left');
     $('.message',game_board).html(messages.join(' '));
   }
 
@@ -166,9 +183,9 @@ var Savitr = function(game_board, options) {
             messages.push('CLEARED!!!');
           }
 
-          if (sets_in(cards_left()).length == 0) {
-            messages.push('NO SETS LEFT');
-          }
+          // if (sets_in(cards_left()).length == 0) {
+          //   messages.push('NO SETS LEFT');
+          // }
 
           update_status(messages);
           console.log(messages, selected_cards);
@@ -187,6 +204,26 @@ var Savitr = function(game_board, options) {
       // update UI
       $(this).parent('td').toggleClass('selected');
     }
+  }
+
+  function finish_click() {
+    clearInterval(timer_var);
+    $('.card', game_board).off('click');
+    $('.controls .finish',game_board).off('click');
+
+    sets_left = sets_in(cards_left())
+
+    copy_text = "Savitr" + 
+      (typeof settings['shuffle'] === 'string' ? ' ' + settings['shuffle'] : '') + 
+       ": " + total_seconds + " seconds. " + initial_sets.length + " initial with " + sets_left.length + " left";
+
+    navigator.clipboard.writeText(copy_text)
+    .then(() => {
+        alert("Copied the text: " + copy_text);
+    })
+    .catch(err => {
+        console.error('Failed to copy text: ', err);
+    });
   }
 
   function is_set(three_cards) {
@@ -277,6 +314,20 @@ var Savitr = function(game_board, options) {
       array[j] = temp;
     }
   }
+
+  function timer() {
+    ++total_seconds;
+    let hour = Math.floor(total_seconds / 3600);
+    let minute = Math.floor((total_seconds - hour * 3600) / 60);
+    let seconds = total_seconds - (hour * 3600 + minute * 60);
+
+    // Add leading zeros if necessary
+    hour = hour < 10 ? "0" + hour : hour;
+    minute = minute < 10 ? "0" + minute : minute;
+    seconds = seconds < 10 ? "0" + seconds : seconds;
+
+    timer_display.innerHTML = hour + ":" + minute + ":" + seconds;
+}
 
   // images below generated using `ruby base64_images.rb | pbcopy`
   //   TODO: optimize the images.  shouldn't need 81 images when there's only 3 shapes
