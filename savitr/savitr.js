@@ -45,7 +45,7 @@ var Savitr = function(game_board, options) {
     // make cards clickable
     $('.card', game_board).click(card_click);
 
-    update_status('Savitr' + (typeof settings['shuffle'] === 'string' ? ' ' + settings['shuffle'] : ''));
+    $('.title',game_board).html('Savitr' + (typeof settings['shuffle'] === 'string' ? '<br/>' + settings['shuffle'] : ''));
 
     $('.controls .finish',game_board).click(finish_click);
 
@@ -62,7 +62,7 @@ var Savitr = function(game_board, options) {
     var table = $('<table/>').addClass('board');
 
     table.append($('<tr class="header">'+
-                      '<th class="sets_left" align="left"></th>' +
+                      '<th class="title" align="left"></th>' +
                       '<th class="message" align="center" colspan="'+(columns-2)+'"></th>' +
                       '<th class="controls" align="right">'+
                           '<span id="timer">00:00:00</span>'+
@@ -112,13 +112,13 @@ var Savitr = function(game_board, options) {
   function update_status(messages) {
     // could pass in a "string" or ["array","of","strings"]
     messages = [].concat(messages);
+    $('.message',game_board).html(messages.join(' '));
 
+    // Used to display number of sets left in status bar
     // How many sets are there laid out?
-    var sets_left = sets_in(cards_left());
-
+    // var sets_left = sets_in(cards_left());
     // $('.sets_left',game_board).html(
     //   (sets_left == 0 ? 'No sets' : sets_left.length + ' set' + (sets_left.length>1 ? 's' : '')) + ' left');
-    $('.message',game_board).html(messages.join(' '));
   }
 
   function cards_left() {
@@ -181,6 +181,7 @@ var Savitr = function(game_board, options) {
 
           if ($('.card', game_board).length == 0) {
             messages.push('CLEARED!!!');
+// TODO:            finish_click();
           }
 
           // if (sets_in(cards_left()).length == 0) {
@@ -190,11 +191,20 @@ var Savitr = function(game_board, options) {
           update_status(messages);
           console.log(messages, selected_cards);
         } else {
-          // TODO: maybe also update status so it's game board visible?
-
           // three cards selected, but not a set, let's log why:
+          diff = vector_mod3(vector_sum(selected_cards));
           console.log(selected_cards,
-            'not a set because',vector_mod3(vector_sum(selected_cards)));
+            'not a set because',diff);
+
+          // TODO: maybe also update status so it's game board visible?
+          diff_attrs = [];
+          for (const key in diff) {
+            if (Object.prototype.hasOwnProperty.call(diff, key)) { // Important for avoiding inherited properties
+              const value = diff[key];
+              if (value > 0) diff_attrs.push(key);
+            }
+          }
+          update_status("Not a set: " + diff_attrs.join(','))
         }
       }
     } else {
@@ -203,6 +213,7 @@ var Savitr = function(game_board, options) {
 
       // update UI
       $(this).parent('td').toggleClass('selected');
+      update_status("");
     }
   }
 
