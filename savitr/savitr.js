@@ -26,18 +26,20 @@ var Savitr = function(game_board, options) {
 
   // Game state
   var selected = []; // each value is card id (index into `deck`)
+  var found_sets = []; // strings of three card numbers (of the deck) separated by dashes "1-5-7".
 
   game_board.html(draw_board(rows,columns));
 
   game_board.addClass('savitr'); // tag the game board, for styling and identification purposes
 
-  var timer_display = document.getElementById("timer");
+  var timer_display = $('.controls .timer',game_board);
   var timer_var;
   var total_seconds = 0;
   var initial_sets = [];
 
   function start() {
     selected = [];  // clear selected so the reset button can call this method
+    found_sets = [];
 
     deal_cards();
     initial_sets = sets_in(cards_left())
@@ -50,7 +52,7 @@ var Savitr = function(game_board, options) {
     $('.controls .finish',game_board).click(finish_click);
 
     total_seconds = 0;
-    timer_display.innerHTML = "00:00:00";
+    timer_display.html("00:00:00");
     if (!timer_var) { // Prevent multiple intervals from starting
       timer_var = setInterval(timer, 1000);
     }
@@ -65,7 +67,7 @@ var Savitr = function(game_board, options) {
                       '<th class="title" align="left"></th>' +
                       '<th class="message" align="center" colspan="'+(columns-2)+'"></th>' +
                       '<th class="controls" align="right">'+
-                          '<span id="timer">00:00:00</span>'+
+                          '<span class="timer">00:00:00</span>'+
                           '<button class="control finish">FINISH</button>'+
                          // '<button class="control reset">reset</button>'+
                       '</th>' +
@@ -81,6 +83,8 @@ var Savitr = function(game_board, options) {
     }
 
     board.append(table);
+
+    board.append($('<div class="found_sets"/>'));
 
     return board;
   }
@@ -149,7 +153,7 @@ var Savitr = function(game_board, options) {
   }
 
   function card_click() {
-    var card_number=$(this).attr('id').split('-')[1];
+    var card_number=$(this).attr('id').split('-')[1]; // e.g. id="card-1" => "1"
 
     var already_selected = (selected.indexOf(card_number) != -1);
 
@@ -174,14 +178,26 @@ var Savitr = function(game_board, options) {
         if (is_set(selected_cards)) {
           var messages = ['SET!'];
 
-          // remove the cards and unselect the board spots
-          selected = [];
-          $('.selected .card', game_board).remove();
-          $('.selected', game_board).toggleClass('selected');
+          selected_card_number_string = selected.sort().join('-')
+          set_already_found = found_sets.includes(selected_card_number_string);
+
+          if (!set_already_found) {
+            cloned = $('.selected .card', game_board).clone();
+            $('.found_sets', game_board).append($('<div/>').append(cloned));
+          // One game variation is to remove a found set. Leaving a found set visible allows finding other sets that may intersect with one of these cards.
+          //          $('.selected .card', game_board).remove();
+            $('.selected', game_board).toggleClass('selected');
+            console.log(selected);
+            found_sets.push(selected_card_number_string);
+            console.log(found_sets);
+            selected = [];
+          } else {
+            messages.push('ALREADY FOUND');
+          }
 
           if ($('.card', game_board).length == 0) {
             messages.push('CLEARED!!!');
-// TODO:            finish_click();
+            finish_click();
           }
 
           // if (sets_in(cards_left()).length == 0) {
@@ -196,7 +212,7 @@ var Savitr = function(game_board, options) {
           console.log(selected_cards,
             'not a set because',diff);
 
-          // TODO: maybe also update status so it's game board visible?
+          // update status on why it isn't a set
           diff_attrs = [];
           for (const key in diff) {
             if (Object.prototype.hasOwnProperty.call(diff, key)) { // Important for avoiding inherited properties
@@ -222,11 +238,9 @@ var Savitr = function(game_board, options) {
     $('.card', game_board).off('click');
     $('.controls .finish',game_board).off('click');
 
-    sets_left = sets_in(cards_left())
-
     copy_text = "Savitr" + 
       (typeof settings['shuffle'] === 'string' ? ' ' + settings['shuffle'] : '') + 
-       ": " + total_seconds + " seconds. " + initial_sets.length + " initial with " + sets_left.length + " left";
+       ": " + found_sets.length + " out of " + initial_sets.length + " found in " + total_seconds + " seconds. ";
 
     navigator.clipboard.writeText(copy_text)
     .then(() => {
@@ -337,7 +351,7 @@ var Savitr = function(game_board, options) {
     minute = minute < 10 ? "0" + minute : minute;
     seconds = seconds < 10 ? "0" + seconds : seconds;
 
-    timer_display.innerHTML = hour + ":" + minute + ":" + seconds;
+    timer_display.html(hour + ":" + minute + ":" + seconds);
 }
 
   // images below generated using `ruby base64_images.rb | pbcopy`
