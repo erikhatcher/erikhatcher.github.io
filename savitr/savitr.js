@@ -290,7 +290,7 @@ var Savitr = function(game_board, options) {
         set_id = initial_sets[i]['set_id'];
         if (!found_sets.includes(set_id)) {
           card_numbers = set_id.split('-');
-          cloned = $('#card-'+card_numbers[0]+',#card-'+card_numbers[1]+',#card-'+card_numbers[2], game_board).clone();
+          cloned = $('.board #card-'+card_numbers[0]+',.board #card-'+card_numbers[1]+',.board #card-'+card_numbers[2], game_board).clone();
           cloned.css("border", "2px solid red");
           $('.found_sets', game_board).append($('<div/>').append(cloned));
           console.log('set_id', set_id, 'cloned:', cloned);
